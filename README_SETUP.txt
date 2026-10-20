@@ -1,36 +1,43 @@
-# LanceSoft Cabs — Web + Android starter
+# LanceSoft Cabs — Firebase web starter
 
-## What is included
-- `public/index.html`: the attendance starter UI and Firebase integration placeholders.
-- `public/manifest.webmanifest`, `public/sw.js`, `public/icons/`: PWA install metadata and basic offline shell caching.
-- `package.json`, `capacitor.config.json`: Capacitor wrapper configuration for Android.
-- `.github/workflows/build-apk.yml`: cloud workflow to build a debug APK from GitHub Actions.
+## Included
+- `index.html`: responsive starter interface for sign-in, access request, user approval, duty IN/OUT, trip notes, location sharing, attendance history, and CSV export.
+- `firestore.rules`: starter Firestore rules that require an admin custom claim and approval status.
 
-## A. Connect Firebase (required)
-1. Open `public/index.html` in an editor.
-2. Replace the placeholder `firebaseConfig` values with your project's Web app config from Firebase Console → Project settings → Your apps.
-3. Enable Email/Password and Google sign-in in Firebase Authentication.
-4. Create Firestore and publish the supplied `firestore.rules` file (included in this ZIP if copied from the starter). If it is absent, use the rules file from the original `LanceSoft_Cabs_Firebase_Starter.zip`.
-5. Securely provision the first admin using Firebase Admin SDK on a trusted server. Never place service-account keys in the web app.
+## 1. Connect Firebase
+1. Open Firebase Console → Project settings → Your apps → Web app.
+2. Copy the `firebaseConfig` object values into `index.html`. Do not add a service-account key.
+3. Authentication → Sign-in method: enable Email/Password and Google.
+4. Authentication → Settings → Authorized domains: add the domain where you host this app.
+5. Firestore Database → Create database. Start in production/locked mode.
+6. Firestore → Rules: paste `firestore.rules` and publish.
 
-## B. Publish the Web App from a phone
-1. Create/sign in to a GitHub account and create a new repository named `lansesoft-cabs`.
-2. Upload all files/folders from this ZIP into the repository (including the hidden `.github` folder).
-3. For a simple static web preview, enable GitHub Pages from repository Settings → Pages → Deploy from branch → `main` / root. Note: Firebase Authentication requires the deployed domain to be added in Firebase Authentication → Settings → Authorized domains.
-4. For production, prefer Firebase Hosting: use Firebase Console/CLI from a computer or cloud shell, or a hosting service connected to the repository. Do not treat a preview deployment as production until rules/auth have been tested.
+## 2. IMPORTANT: provision the first admin securely
+The interface intentionally does not allow users to make themselves admin. A trusted project owner must assign the Firebase custom claim `admin: true` to the first admin user's Firebase Auth UID using a trusted server environment and Firebase Admin SDK. Never put Admin SDK credentials in this HTML or in a browser. Until this is done, approval management and admin reports will be unavailable.
 
-## C. Build APK using GitHub Actions
-1. Upload the project to GitHub as above.
-2. Open repository → Actions → Build Android APK → Run workflow (or push a commit to `main`).
-3. Wait for the workflow to finish successfully.
-4. Open the completed workflow run, scroll to Artifacts, and download `LanceSoft-Cabs-debug-apk`.
-5. Extract the artifact ZIP and install `app-debug.apk` on your Android phone. Android may ask you to allow installation from that browser/files app.
-6. A debug APK is for testing. A signed release APK/AAB requires signing configuration and secure storage of signing keys.
+Example trusted server-side Node.js code (run only in a secured admin environment):
+```js
+import { initializeApp, applicationDefault } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+initializeApp({ credential: applicationDefault() });
+await getAuth().setCustomUserClaims("REPLACE_WITH_ADMIN_AUTH_UID", { admin: true });
+```
+Then sign out and sign back in as that admin so the new token claim is refreshed.
 
-## Important limitations and security
-- This is a starter project, not a production-certified system. Test on a separate Firebase project first.
-- User approval relies on a trusted Firebase custom claim (`admin: true`); the web page must never grant this claim to itself.
-- The starter's location feature is user-triggered location sharing, not continuous/background tracking. Background GPS requires a native Android foreground service, runtime permissions, privacy disclosure, and testing.
-- In-app calling without showing personal numbers requires a calling/VoIP provider and backend; not included.
-- Push notifications, trip assignment, scheduled shifts, driver/vendor management workflows, odometer/fuel sheets, audit logs, and server-side validations remain additional work.
-- Do not use real employee location data until security rules, privacy notices, access roles, and retention policy have been reviewed.
+## 3. Run and host
+Because Firebase modules and browser geolocation need a secure context, use Firebase Hosting or another HTTPS host. For a quick test, use Firebase Hosting:
+- Install Node.js and Firebase CLI on a computer.
+- `npm install -g firebase-tools`
+- `firebase login`
+- In a folder containing `index.html`, run `firebase init hosting`, choose the existing LanceSoft Cabs project, set the public directory to `.` and configure as a single-page app: No is fine for this single HTML page.
+- `firebase deploy --only hosting`
+Use a separate project for testing before real deployment.
+
+## 4. Current limitations / production work still required
+This is a starter, not a fully production-certified app:
+- Location sharing is user-triggered current-location sharing; continuous background GPS tracking is not implemented. Reliable background tracking on Android requires a native app/foreground service and explicit permission.
+- Calling without exposing personal numbers requires a telephony/VoIP provider and backend; this starter does not implement calls.
+- Push notifications, employee roster imports, shift scheduling, trip assignment, cab-reading/odometer sheets, payroll, audit logs, and server-side validation need to be added for production.
+- Use Firestore indexes if Firebase asks for them.
+- Test rules with the Firebase Rules Playground or Emulator before using real employee data.
+- Keep location collection transparent, limited to active duty, and governed by company policy and applicable law.
