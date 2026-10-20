@@ -1,0 +1,17 @@
+
+{
+  "name": "lancesoft-cabs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LanceSoft Cabs Attendance App",
+  "scripts": {
+    "build": "mkdir -p public && cp index.html public/index.html"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/android": "^7.4.3"
+  }
+}
