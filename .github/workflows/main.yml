@@ -17,22 +17,22 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22' # लेटेस्ट Node वर्जन पर अपडेट किया
+          node-version: '20' # इसे वापस 20 कर दिया है
 
       - name: Setup Java
-        uses: actions/setup-java@v5 # v4 की जगह v5 किया ताकि वार्निंग न आए
+        uses: actions/setup-java@v4 # इसे वापस v4 कर दिया है ताकि कंपैटिबिलिटी बनी रहे
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Install dependencies
-        run: npm ci # npm install से बेहतर और क्लीन इंस्टॉलेशन के लिए
+        run: npm install --legacy-peer-deps # किसी भी लाइब्रेरी विवाद को रोकने के लिए
 
       - name: Prepare web files
         run: npm run build
 
       - name: Add Android platform
-        run: npx cap add android || true # अगर पहले से ऐड है तो एरर न आए
+        run: npx cap add android || true
 
       - name: Sync Android
         run: npx cap sync android
@@ -41,10 +41,10 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew clean assembleDebug --stacktrace # क्लीन बिल्ड कमांड
+          ./gradlew clean assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: LanceSoft-Cabs-debug-apk
-          path: android/app/build/outputs/apk/debug/*.apk # पाथ को डायनामिक किया ताकि सही APK मिले
+          path: android/app/build/outputs/apk/debug/*.apk
