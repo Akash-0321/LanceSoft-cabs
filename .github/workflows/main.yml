@@ -6,7 +6,7 @@ import { getFirestore, doc, getDoc } from "firebase/firestore";
 
 // 1. Firebase Project Config (Correct credentials added)
 const firebaseConfig = {
-  apiKey: "AIzaSyAgd9mi2d8zM0b_s7Ic5YA1W58YEFoK2l4", // Apni API key Console se yahan dalein
+  apiKey: "AIzaSyAgd9mi2d8zM0b_s7Ic5YA1W58YEFoK2l4",
   authDomain: "lancesoft-cabs-app.firebaseapp.com",
   projectId: "lancesoft-cabs-app",
   storageBucket: "lancesoft-cabs-app.firebasestorage.app",
