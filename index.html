@@ -74,12 +74,14 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, query
 
 // REPLACE every placeholder below with your Firebase Console web-app configuration.
 const firebaseConfig = {
-  apiKey: "PASTE_API_KEY_HERE",
-  authDomain: "PASTE_PROJECT_ID_HERE.firebaseapp.com",
-  projectId: "PASTE_PROJECT_ID_HERE",
-  storageBucket: "PASTE_STORAGE_BUCKET_HERE",
-  messagingSenderId: "PASTE_MESSAGING_SENDER_ID_HERE",
-  appId: "PASTE_APP_ID_HERE"
+  apiKey: "AIzaSyCduPamxcnrtUKUZmSqGh82jmiEopXxMvk",
+  authDomain: "lancesoft-cabs.firebaseapp.com",
+  databaseURL: "https://lancesoft-cabs-default-rtdb.firebaseio.com",
+  projectId: "lancesoft-cabs",
+  storageBucket: "lancesoft-cabs.firebasestorage.app",
+  messagingSenderId: "899171450775",
+  appId: "1:899171450775:web:54cdc93777d579f3194ed2",
+  measurementId: "G-LZH3H4V2SM"
 };
 const configured = !Object.values(firebaseConfig).some(v => String(v).includes("PASTE_"));
 const $ = id => document.getElementById(id);
