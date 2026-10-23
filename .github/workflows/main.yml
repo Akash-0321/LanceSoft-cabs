@@ -17,6 +17,10 @@ jobs:
         run: npm install
       - name: Create Android project
         run: npx cap add android
+      - name: Install dependencies
+        run: npm install
+      - name: Build Web App
+        run: npm run build  
       - name: Sync web app
         run: npx cap sync android
       - name: Setup Java
