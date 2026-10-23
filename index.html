@@ -14,7 +14,7 @@ main{max-width:1100px;margin:24px auto;padding:0 16px}.panel{background:white;bo
 h1,h2,h3{margin:0 0 12px}h1{font-size:25px}h2{font-size:18px}.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
 label{display:block;font-weight:650;font-size:13px;margin:12px 0 6px}input,select,textarea{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;background:white;font:inherit}button{border:0;border-radius:10px;padding:11px 15px;background:var(--blue);color:white;font-weight:700;font:inherit;cursor:pointer}button.secondary{background:#e8eef8;color:var(--navy)}button.danger{background:#b42318}button:disabled{opacity:.5;cursor:not-allowed}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.hidden{display:none!important}.status{padding:10px 12px;border-radius:10px;background:#eef4ff;margin:10px 0}.success{background:#e8f7ef;color:#12683f}.error{background:#fff0ef;color:#9b1c13}.pill{display:inline-block;padding:4px 9px;border-radius:99px;background:#edf2fa;font-size:12px;font-weight:700}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.stat{padding:15px;border:1px solid var(--line);border-radius:12px}.num{font-size:25px;font-weight:800}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#f8fafc}.tablewrap{overflow:auto}.small{font-size:12px}.section{margin-top:18px}footer{text-align:center;color:var(--muted);padding:20px;font-size:12px}
 </style>
-</head>
+<link rel="manifest" href="./manifest.webmanifest"><meta name="theme-color" content="#10233f"></head>
 <body>
 <header><div><div class="brand">🚐 LanceSoft Cabs</div><div class="sub">Office cab attendance & duty management</div></div><div id="topUser" class="small"></div></header>
 <main>
@@ -74,15 +74,12 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, query
 
 // REPLACE every placeholder below with your Firebase Console web-app configuration.
 const firebaseConfig = {
-  apiKey: "AIzaSyCduPamxcnrtUKUZmSqGh82jmiEopXxMvk",
-  authDomain: "lancesoft-cabs.firebaseapp.com",
-  databaseURL: "https://lancesoft-cabs-default-rtdb.firebaseio.com",
-  projectId: "lancesoft-cabs",
-  storageBucket: "lancesoft-cabs.firebasestorage.app",
-  messagingSenderId: "899171450775",
-  appId: "1:899171450775:web:54cdc93777d579f3194ed2",
-  measurementId: "G-LZH3H4V2SM"
-};
+  apiKey: "PASTE_API_KEY_HERE",
+  authDomain: "PASTE_PROJECT_ID_HERE.firebaseapp.com",
+  projectId: "PASTE_PROJECT_ID_HERE",
+  storageBucket: "PASTE_STORAGE_BUCKET_HERE",
+  messagingSenderId: "PASTE_MESSAGING_SENDER_ID_HERE",
+  appId: "PASTE_APP_ID_HERE"
 };
 const configured = !Object.values(firebaseConfig).some(v => String(v).includes("PASTE_"));
 const $ = id => document.getElementById(id);
@@ -189,5 +186,5 @@ $("loadRecords").onclick=async()=>{
 };
 $("exportBtn").onclick=()=>downloadCSV(exportRows,"lansesoft-cabs-export.csv");
 </script>
-</body>
+<script>if ("serviceWorker" in navigator && location.protocol.startsWith("http")) { window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(console.error)); }</script></body>
 </html>
