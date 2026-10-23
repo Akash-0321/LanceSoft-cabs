@@ -1,50 +1,106 @@
-name: Build Android APK
+import React, { useState, useEffect } from "react";
+import { StyleSheet, Text, View, TextInput, Button, ActivityIndicator, Alert } from "react-native";
+import { initializeApp } from "firebase/app";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 
-on:
-  workflow_dispatch:
+// 1. Firebase Project Config (Correct credentials added)
+const firebaseConfig = {
+  apiKey: "AIzaSyAgd9mi2d8zM0b_s7Ic5YA1W58YEFoK2l4", // Apni API key Console se yahan dalein
+  authDomain: "lancesoft-cabs-app.firebaseapp.com",
+  projectId: "lancesoft-cabs-app",
+  storageBucket: "lancesoft-cabs-app.firebasestorage.app",
+  messagingSenderId: "72077809376",
+  appId: "1:72077809376:web:6f731a9324b65047b5e285
+"
+};
 
-permissions:
-  contents: read
+// Services Initialize karein [7]
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
+  const [status, setStatus] = useState("inactive");
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  useEffect(() => {
+    // Auth Listener
+    const unsubscribe = onAuthStateChanged(auth, async (currUser) => {
+      if (currUser) {
+        setUser(currUser);
+        // Database se Role aur status fetch karein [Cloud Firestore]
+        const docSnap = await getDoc(doc(db, "users", currUser.uid));
+        if (docSnap.exists()) {
+          setRole(docSnap.data().role);
+          setStatus(docSnap.data().status);
+        }
+      } else {
+        setUser(null);
+        setRole(null);
+        setStatus("inactive");
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20' # इसे वापस 20 कर दिया है
+  const handleLogin = () => {
+    if (email && password) {
+      signInWithEmailAndPassword(auth, email, password)
+        .catch(err => Alert.alert("Login Failed", err.message));
+    }
+  };
 
-      - name: Setup Java
-        uses: actions/setup-java@v4 # इसे वापस v4 कर दिया है ताकि कंपैटिबिलिटी बनी रहे
-        with:
-          distribution: temurin
-          java-version: '21'
+  const handleLogout = () => signOut(auth);
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps # किसी भी लाइब्रेरी विवाद को रोकने के लिए
+  if (loading) {
+    return <View style={styles.center}><ActivityIndicator size="large" color="#00aaff" /></View>;
+  }
 
-      - name: Prepare web files
-        run: npm run build
+  // 2. Login View
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>LanceSoft Cabs App Login</Text>
+        <TextInput placeholder="Email" value={email} onChangeText={setEmail} style={styles.input} autoCapitalize="none" />
+        <TextInput placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry style={styles.input} />
+        <Button title="Sign In" onPress={handleLogin} color="#00aaff" />
+      </View>
+    );
+  }
 
-      - name: Add Android platform
-        run: npx cap add android || true
+  // 3. User Deactivated View
+  if (status !== "active") {
+    return (
+      <View style={styles.center}>
+        <Text style={{ marginBottom: 15 }}>Aapka account admin se approved nahi hai.</Text>
+        <Button title="Logout" onPress={handleLogout} />
+      </View>
+    );
+  }
 
-      - name: Sync Android
-        run: npx cap sync android
+  // 4. Role-Based Views (Admin / Driver / Employee)
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Welcome, {role.toUpperCase()}!</Text>
+      {role === "admin" && <Text>Admin: Yahan se groups aur approvals manage karein.</Text>}
+      {role === "driver" && <Text>Driver: Yahan se live location tracking start karein.</Text>}
+      {role === "employee" && <Text>Employee: Yahan se apna Attendance register karein.</Text>}
+      <View style={{ marginTop: 30 }}>
+        <Button title="Log Out" onPress={handleLogout} color="red" />
+      </View>
+    </View>
+  );
+}
 
-      - name: Build Android APK
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew clean assembleDebug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: LanceSoft-Cabs-debug-apk
-          path: android/app/build/outputs/apk/debug/*.apk
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: "center", padding: 25 },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  title: { fontSize: 22, fontWeight: "bold", textAlign: "center", marginBottom: 20 },
+  input: { borderWidth: 1, borderColor: "#ccc", padding: 12, marginVertical: 10, borderRadius: 8 }
+});
