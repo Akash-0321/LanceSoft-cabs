@@ -1,0 +1,370 @@
+{
+  uid: "employee_id_1",
+  name: "Rahul",
+  role: "employee", // "driver", "admin", ya "vendor"
+  status: "active",  // Deactivate karne par ise "inactive" kar dein
+  phoneNumber: "+919999999999"
+}
+{
+  groupId: "cab_DL1C_1234",
+  cabNumber: "DL1C 1234",
+  driverId: "driver_uid_1",
+  members: ["employee_id_1", "employee_id_2"], // Admin control
+  round: 1 // 1st, 2nd, ya 3rd round ke liye
+}
+{
+  logId: "auto_generated_id",
+  employeeId: "employee_id_1",
+  date: "2026-10-23",
+  timeIn: "09:00 AM",
+  timeOut: "06:00 PM",
+  status: "Present" // "Leave", "Holiday", ya "Absent"
+}
+import { doc, onSnapshot } from "firebase/firestore";
+
+// Employee app me live location fetch karne ke liye code
+const unsub = onSnapshot(doc(db, "cabs_location", "cab_DL1C_1234"), (doc) => {
+    const data = doc.data();
+    if (data) {
+        updateMapMarker(data.latitude, data.longitude); // Map par marker update karein
+    }
+});
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /groups/{group} {
+      // Sirf admin hi groups generate ya modify kar sakta hai
+      allow write, delete: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow read: if request.auth != null;
+    }
+  }
+}
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "lancesoft-cabs-app.firebaseapp.com",
+  projectId: "lancesoft-cabs-app",
+  storageBucket: "lancesoft-cabs-app.firebasestorage.app",
+  messagingSenderId: "72077809376",
+  appId: "YOUR_APP_ID"
+};
+npm install firebase
+// Core Firebase App SDK ko import karein
+import { initializeApp } from "firebase/app";
+
+// Jin services ki zarurat hai unhe import karein
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+
+// Console se copy kiya hua Config object yahan dalein
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "lancesoft-cabs-app.firebaseapp.com",
+  projectId: "lancesoft-cabs-app",
+  storageBucket: "lancesoft-cabs-app.firebasestorage.app",
+  messagingSenderId: "72077809376",
+  appId: "YOUR_APP_ID"
+};
+
+// Firebase initialize karein [7]
+const app = initializeApp(firebaseConfig);
+
+// App me use karne ke liye export karein
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "./firebase"; // Aapki initialized firebase file
+
+// Driver ki location update karne ka function
+async function updateDriverLocation(cabId: string, latitude: number, longitude: number) {
+  const cabLocationRef = doc(db, "cabs_location", cabId);
+  try {
+    await setDoc(cabLocationRef, {
+      latitude: latitude,
+      longitude: longitude,
+      updatedAt: new Date()
+    }, { merge: true }); // merge: true se bakki data delete nahi hoga
+    console.log("Location updated successfully!");
+  } catch (error) {
+    console.error("Error updating location: ", error);
+  }
+}
+
+// Example usage: Har kuch seconds baad coordinates pass karein
+// (Aap browser ke Geolocation API se coordinates fetch kar sakte hain)
+updateDriverLocation("DL1C_1234", 28.6139, 77.2090);
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "./firebase";
+
+// Driver ki location ko real-time track karne ka function
+function listenToCabLocation(cabId: string, onLocationChange: (lat: number, lng: number) => void) {
+  const cabLocationRef = doc(db, "cabs_location", cabId);
+
+  // onSnapshot realtime data change ko listen karta hai [Cloud Firestore]
+  const unsubscribe = onSnapshot(cabLocationRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      const { latitude, longitude } = data;
+      onLocationChange(latitude, longitude); // UI ya Map update function call karein
+    } else {
+      console.log("No location data found.");
+    }
+  });
+
+  return unsubscribe; // Jab tracking band karni ho tab listener close karne ke liye ise call karein
+}
+
+// Example usage:
+const stopTracking = listenToCabLocation("DL1C_1234", (lat, lng) => {
+  console.log(`Live Coordinates -> Lat: ${lat}, Lng: ${lng}`);
+  // Yahan map par custom marker position update karein:
+  // myMapMarker.setPosition({ lat, lng });
+});
+import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { db } from "./firebase"; // Aapki firebase initialization file
+
+// Aaj ki date (YYYY-MM-DD) format me nikalne ka helper function
+const getTodayDate = () => new Date().toISOString().split("T")[0];
+
+// 1. Time In (Check-In) Register Karna [Cloud Firestore]
+export async function registerCheckIn(employeeId: string, cabNumber: string) {
+  const today = getTodayDate();
+  const attendanceRef = doc(db, "attendance", `${employeeId}_${today}`);
+
+  try {
+    await setDoc(attendanceRef, {
+      employeeId,
+      cabNumber,
+      date: today,
+      timeIn: new Date().toLocaleTimeString(), // Current system time
+      timeOut: null, // Check-out ke waqt update hoga
+      status: "Present"
+    }, { merge: true });
+    console.log("Check-in register ho gaya!");
+  } catch (error) {
+    console.error("Check-in error: ", error);
+  }
+}
+
+// 2. Time Out (Check-Out) Register Karna [Cloud Firestore]
+export async function registerCheckOut(employeeId: string) {
+  const today = getTodayDate();
+  const attendanceRef = doc(db, "attendance", `${employeeId}_${today}`);
+
+  try {
+    // Sirf timeOut field ko update karenge
+    await updateDoc(attendanceRef, {
+      timeOut: new Date().toLocaleTimeString()
+    });
+    console.log("Check-out register ho gaya!");
+  } catch (error) {
+    console.error("Check-out error: ", error);
+  }
+}
+
+// 3. Employee Leave Apply Karna (Pehle se attendance status 'Leave' mark karna) [Cloud Firestore]
+export async function applyLeave(employeeId: string, leaveDate: string) {
+  const attendanceRef = doc(db, "attendance", `${employeeId}_${leaveDate}`);
+
+  try {
+    await setDoc(attendanceRef, {
+      employeeId,
+      date: leaveDate,
+      timeIn: null,
+      timeOut: null,
+      status: "Leave"
+    }, { merge: true });
+    console.log("Leave apply ho gayi hai!");
+  } catch (error) {
+    console.error("Leave entry error: ", error);
+  }
+}
+import { onRequest } from "firebase-functions/v2/https";
+import { getFirestore } from "firebase-admin/firestore";
+import * as admin from "firebase-admin";
+
+// Admin app initialize karein
+admin.initializeApp();
+const db = getFirestore();
+
+// HTTP Endpoint to export report
+export const exportMonthlyReport = onRequest(async (req, res) => {
+  const month = req.query.month; // URL Parameter: ?month=2026-10
+  
+  if (!month) {
+    res.status(400).send("Please specify month (e.g. ?month=2026-10)");
+    return;
+  }
+
+  try {
+    const attendanceRef = db.collection("attendance");
+    // Filter attendance for the selected month [Cloud Firestore]
+    const snapshot = await attendanceRef
+      .where("date", ">=", `${month}-01`)
+      .where("date", "<=", `${month}-31`)
+      .get();
+
+    // CSV Headers
+    let csvContent = "Employee ID,Cab Number,Date,Time In,Time Out,Status\n";
+
+    // Row-by-row data prepare karein
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      csvContent += `${data.employeeId},${data.cabNumber || "N/A"},${data.date},${data.timeIn || "N/A"},${data.timeOut || "N/A"},${data.status}\n`;
+    });
+
+    // Browser ko signal karein ki file download karni hai
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename=attendance_${month}.csv`);
+    
+    res.status(200).send(csvContent);
+  } catch (error) {
+    res.status(500).send("Error exporting data: " + error.toString());
+  }
+});
+const directionsService = new google.maps.DirectionsService();
+
+const routeRequest = {
+  origin: "Cab_Start_Location_Coordinates", // Cab stand ya Driver starting point
+  destination: "Office_Location_Coordinates", // Office final stop
+  waypoints: [
+    { location: "Employee_1_Address" },
+    { location: "Employee_2_Address" },
+    { location: "Employee_3_Address" }
+  ],
+  optimizeWaypoints: true, // Google automatic sabse kam time wala route calculate karega
+  travelMode: google.maps.TravelMode.DRIVING
+};
+
+directionsService.route(routeRequest, (result, status) => {
+  if (status === 'OK') {
+    // Optimized stops order check karne ke liye:
+    console.log("Optimized Sequence: ", result.routes[0].waypoint_order);
+    // Is output ko driver ke navigation screen par load kar sakte hain
+  }
+});
+# 1. Naya Expo App create karein
+npx create-expo-app@latest lancesoft-cabs-app
+
+# 2. Project folder ke andar jayein
+cd lancesoft-cabs-app
+# 1. Web support add karein (for website run)
+npx expo install react-dom react-native-web @expo/metro-runtime
+
+# 2. Firebase SDK install karein [7]
+npx expo install firebase
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "lancesoft-cabs-app.firebaseapp.com",
+  projectId: "lancesoft-cabs-app",
+  storageBucket: "lancesoft-cabs-app.firebasestorage.app",
+  messagingSenderId: "72077809376",
+  appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase [7]
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+import React, { useState, useEffect } from "react";
+import { ActivityIndicator, View, Text, Button } from "react-native";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "./src/config/firebase";
+
+// Screens (Aap in files ko apne screens folder me banayenge)
+import LoginScreen from "./src/screens/LoginScreen";
+import AdminDashboard from "./src/screens/AdminDashboard";
+import DriverScreen from "./src/screens/DriverScreen";
+import EmployeeScreen from "./src/screens/EmployeeScreen";
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
+  const [status, setStatus] = useState("inactive"); // Default status
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // 1. User login/logout status check karein
+    const unsubscribe = onAuthStateChanged(auth, async (authenticatedUser) => {
+      if (authenticatedUser) {
+        setUser(authenticatedUser);
+
+        // 2. User ka role aur approval status database se fetch karein [Cloud Firestore]
+        const userDocRef = doc(db, "users", authenticatedUser.uid);
+        const docSnap = await getDoc(userDocRef);
+
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+          setRole(userData.role);
+          setStatus(userData.status); // Admin dynamic screen status control
+        }
+      } else {
+        setUser(null);
+        setRole(null);
+        setStatus("inactive");
+      }
+      setLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // Loading indicator jab tak status fetch ho raha hai
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#00aaff" />
+      </View>
+    );
+  }
+
+  // 3. User logged in nahi hai -> Login Screen dikhayein
+  if (!user) {
+    return <LoginScreen />;
+  }
+
+  // 4. User logged in hai par Admin se approved nahi hai (Status checking)
+  if (status !== "active") {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
+        <Text style={{ fontSize: 16, textAlign: "center", marginBottom: 20 }}>
+          Aapka account approved nahi hai ya use deactivate kiya gaya hai. Admin se sampark karein.
+        </Text>
+        <Button title="Log Out" onPress={() => signOut(auth)} />
+      </View>
+    );
+  }
+
+  // 5. Role ke hisab se automatic screen display
+  switch (role) {
+    case "admin":
+      return <AdminDashboard />;
+    case "driver":
+      return <DriverScreen />;
+    case "employee":
+      return <EmployeeScreen />;
+    default:
+      return <LoginScreen />;
+  }
+}
+npm install firebase// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAgd9mi2d8zM0b_s7Ic5YA1W58YEFoK2l4",
+  authDomain: "lancesoft-cabs-app.firebaseapp.com",
+  projectId: "lancesoft-cabs-app",
+  storageBucket: "lancesoft-cabs-app.firebasestorage.app",
+  messagingSenderId: "72077809376",
+  appId: "1:72077809376:web:6f731a9324b65047b5e285"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
