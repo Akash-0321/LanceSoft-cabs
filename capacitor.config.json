@@ -1,0 +1,8 @@
+{
+  "appId": "com.lansesoft.cabs",
+  "appName": "LanceSoft Cabs",
+  "webDir": "public",
+  "server": {
+    "androidScheme": "https"
+  }
+}
