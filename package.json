@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "LanceSoft Cabs web and Android starter",
-  "scripts": {
+  "build": {
     "start": "npx serve public",
     "android:add": "npx cap add android",
     "android:sync": "npx cap sync android"
