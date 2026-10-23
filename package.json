@@ -2,11 +2,12 @@
   "name": "lansesoft-cabs-attendance",
   "version": "1.0.0",
   "private": true,
-  "description": "LanceSoft Cabs web and Android starter",
-  "build": {
+  "description": "LanceSoft Cabs web and",
+  "scripts": {
     "start": "npx serve public",
     "android:add": "npx cap add android",
-    "android:sync": "npx cap sync android"
+    "android:sync": "npx cap sync android",
+    "build": "mkdir -p public && echo '<html><body>LanceSoft Cabs</body></html>' > public/index.html"
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",
