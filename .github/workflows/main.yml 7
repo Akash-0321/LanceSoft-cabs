@@ -74,7 +74,7 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, query
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCduPamxcnrtUKUZmSqGh82jmiEopXxMvk",
+   apiKey: "AIzaSyCduPamxcnrtUKUZmSqGh82jmiEopXxMvk",
   authDomain: "lancesoft-cabs.firebaseapp.com",
   databaseURL: "https://lancesoft-cabs-default-rtdb.firebaseio.com",
   projectId: "lancesoft-cabs",
@@ -82,7 +82,7 @@ const firebaseConfig = {
   messagingSenderId: "899171450775",
   appId: "1:899171450775:web:b999acde49134ba1194ed2",
   measurementId: "G-4ZNLSQGZ48"
-}; 
+};
 const configured = !Object.values(firebaseConfig).some(v => String(v).includes("PASTE_"));
 const $ = id => document.getElementById(id);
 const app = initializeApp(firebaseConfig);
